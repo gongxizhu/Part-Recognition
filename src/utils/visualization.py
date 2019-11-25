@@ -476,9 +476,10 @@ def visualize_boxes_and_labels_on_image_array(image,
                         class_name = category_index[classes[i]]['name']
                     else:
                         class_name = 'N/A'
-                    display_str = '{}: {}%'.format(
-                        class_name,
-                        int(100 * scores[i]))
+                    # display_str = '{}: {}%'.format(
+                    #     class_name,
+                    #     int(100 * scores[i]))
+                    display_str = ''
                 else:
                     display_str = 'score: {}%'.format(int(100 * scores[i]))
                 box_to_display_str_map[box].append(display_str)

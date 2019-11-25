@@ -1,18 +1,19 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from desktop_ui.main import *
+from main import *
 import cv2
 import sys
 import numpy as np
 import PIL.Image as Image
 import PIL.ImageDraw as ImageDraw
 import PIL.ImageFont as ImageFont
-from utils.global_variables import *
-from desktop_ui.train import *
-from detectors.detector import *
-from controllers import service_controller
+from src.utils.global_variables import *
+from train import *
+from src.detectors.detector import *
+from src.controllers import service_controller
 import threading
+
 
 class TrainUI(QtWidgets.QDialog, Ui_Dialog):
     __timer_camera = None
@@ -41,14 +42,12 @@ class TrainUI(QtWidgets.QDialog, Ui_Dialog):
         except Exception as ex:
             print(ex)
 
-
     def _showWarningMessage(self, msg):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(msg)
         msgBox.setStandardButtons(QMessageBox.Ok)
         msgBox.exec_()
-
 
     def _sample(self):
         self.__count_samples = 0
@@ -58,24 +57,23 @@ class TrainUI(QtWidgets.QDialog, Ui_Dialog):
         else:
             self._showWarningMessage("Please input a valid part number")
 
-
     def _train(self):
         self.__part_number = self.le_part_number.text()
-        if self.__part_number != "":
-            class_name = DATA_PREFIX + self.__part_number
-            data_dir = self._get_sample_dir(self.__part_number)
-            image_paths = [os.path.join(data_dir, image_name) for image_name in os.listdir(data_dir)]
-            print(data_dir)
-            print(image_paths)
-            # self.__controller.train_classifier(image_paths, class_name)
-            self.__controller.train_classifier_from_scratch()
-        else:
-            self._showWarningMessage("Please input a valid part number")
-
+        self.__controller.train_classifier_from_scratch()
+        # if self.__part_number != "":
+        #     class_name = DATA_PREFIX + self.__part_number
+        #     data_dir = self._get_sample_dir(self.__part_number)
+        #     image_paths = [os.path.join(data_dir, image_name) for image_name in os.listdir(data_dir)]
+        #     print(data_dir)
+        #     print(image_paths)
+        #     # self.__controller.train_classifier(image_paths, class_name)
+        #     self.__controller.train_classifier_from_scratch()
+        # else:
+        #     self._showWarningMessage("Please input a valid part number")
 
     def _get_sample_dir(self, part_number):
         part_folder_name = DATA_PREFIX + part_number
-        sample_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), DATASET_FOLDER, part_folder_name)
+        sample_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), DATASET_FOLDER, 'train', part_folder_name)
         if not os.path.exists(sample_dir):
             os.mkdir(sample_dir)
         # else:
@@ -83,12 +81,10 @@ class TrainUI(QtWidgets.QDialog, Ui_Dialog):
         #     os.mkdir(sample_dir)
         return sample_dir
 
-
     def _close(self):
         if self.__cap_camera != None:
             self.__cap_camera.release()
         self.close()
-
 
     def _nextFrameSlot_Camera(self):
         try:
@@ -114,7 +110,6 @@ class TrainUI(QtWidgets.QDialog, Ui_Dialog):
             self.__timer_camera.stop()
             self.__cap_camera.release()
 
-
     def _nextFrameSlot_Detect(self):
         if self.__cap_camera != None and not self.__is_detecting:
             ret, img = self.__cap_camera.read()
@@ -124,7 +119,6 @@ class TrainUI(QtWidgets.QDialog, Ui_Dialog):
                 #self._detect(img_new)
                 t = threading.Thread(target=self._detect, args=(img_new,))
                 t.start()
-
 
     def _fill_sample_box(self, img):
         try:

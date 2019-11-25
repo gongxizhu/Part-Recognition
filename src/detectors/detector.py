@@ -4,15 +4,16 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from google.protobuf import text_format
-from protobufs import string_int_label_map_pb2
-from utils.global_variables import *
+from src.protobufs import string_int_label_map_pb2
+from src.utils.global_variables import *
 # sys.path.append("..")
-from utils import visualization as vis_util
+from src.utils import visualization as vis_util
 
 
 class Detector():
     __detection_graph = None
     __category_index = None
+    __sess = None
 
     def __init__(self, model_folder_path, num_of_class):
         self.__detection_graph = tf.Graph()
@@ -26,6 +27,8 @@ class Detector():
             label_map = self._load_labelmap(labels_path)
             categories = self._convert_label_map_to_categories(label_map, max_num_classes=num_of_class, use_display_name=True)
             self.__category_index = self._create_category_index(categories)
+        self.__sess = tf.Session(graph=self.__detection_graph)
+
 
     def _load_model_from_file(self, frozen_model_path):
         od_graph_def = tf.GraphDef()
@@ -76,29 +79,50 @@ class Detector():
         return category_index
 
     def detect(self, image):
-        with self.__detection_graph.as_default():
-            with tf.Session(graph=self.__detection_graph) as sess:
-                image_expanded = np.expand_dims(image, axis=0)
-                boxes = self.__detection_graph.get_tensor_by_name('detection_boxes:0')
-                scores = self.__detection_graph.get_tensor_by_name('detection_scores:0')
-                classes = self.__detection_graph.get_tensor_by_name('detection_classes:0')
-                num_detections = self.__detection_graph.get_tensor_by_name('num_detections:0')
-                image_tensor = self.__detection_graph.get_tensor_by_name('image_tensor:0')
-                print('Start Inference...')
-                (boxes, scores, classes, num_detections) = sess.run(
-                    [boxes, scores, classes, num_detections],
-                    feed_dict={image_tensor: image_expanded})
+        # with self.__detection_graph.as_default():
+        #     with tf.Session(graph=self.__detection_graph) as sess:
+        #         image_expanded = np.expand_dims(image, axis=0)
+        #         boxes = self.__detection_graph.get_tensor_by_name('detection_boxes:0')
+        #         scores = self.__detection_graph.get_tensor_by_name('detection_scores:0')
+        #         classes = self.__detection_graph.get_tensor_by_name('detection_classes:0')
+        #         num_detections = self.__detection_graph.get_tensor_by_name('num_detections:0')
+        #         image_tensor = self.__detection_graph.get_tensor_by_name('image_tensor:0')
+        #         print('Start Inference...')
+        #         (boxes, scores, classes, num_detections) = sess.run(
+        #             [boxes, scores, classes, num_detections],
+        #             feed_dict={image_tensor: image_expanded})
+        #
+        #         image_processed, box_coordinates = vis_util.visualize_boxes_and_labels_on_image_array(
+        #             image,
+        #             np.squeeze(boxes),
+        #             np.squeeze(classes).astype(np.int32),
+        #             np.squeeze(scores),
+        #             self.__category_index,
+        #             use_normalized_coordinates=True,
+        #             line_thickness=8)
+        #
+        #         return box_coordinates
+        image_expanded = np.expand_dims(image, axis=0)
+        boxes = self.__detection_graph.get_tensor_by_name('detection_boxes:0')
+        scores = self.__detection_graph.get_tensor_by_name('detection_scores:0')
+        classes = self.__detection_graph.get_tensor_by_name('detection_classes:0')
+        num_detections = self.__detection_graph.get_tensor_by_name('num_detections:0')
+        image_tensor = self.__detection_graph.get_tensor_by_name('image_tensor:0')
+        # print('Start Inference...')
+        (boxes, scores, classes, num_detections) = self.__sess.run(
+            [boxes, scores, classes, num_detections],
+            feed_dict={image_tensor: image_expanded})
 
-                image_processed, box_coordinates = vis_util.visualize_boxes_and_labels_on_image_array(
-                    image,
-                    np.squeeze(boxes),
-                    np.squeeze(classes).astype(np.int32),
-                    np.squeeze(scores),
-                    self.__category_index,
-                    use_normalized_coordinates=True,
-                    line_thickness=8)
+        image_processed, box_coordinates = vis_util.visualize_boxes_and_labels_on_image_array(
+            image,
+            np.squeeze(boxes),
+            np.squeeze(classes).astype(np.int32),
+            np.squeeze(scores),
+            self.__category_index,
+            use_normalized_coordinates=True,
+            line_thickness=3)
 
-                return box_coordinates
+        return box_coordinates
 
     def crop(self, image, coordinates):
         image_pil = Image.fromarray(image)

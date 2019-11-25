@@ -1,5 +1,5 @@
-from networks import resnet_v2
-from classifiers import svm_classifier
+from src.networks import resnet_v2
+from src.classifiers import svm_classifier
 
 DETECTOR_MODEL_MAP = {
     'faster_rcnn_inception_resnet_v2_atrous_lowproposals_oid': ("faster_rcnn_inception_resnet_v2_open_images", 600),
@@ -26,5 +26,8 @@ MAIN_WINDOW_WIDTH = 800
 MAIN_WINDOW_HEIGHT = 600
 TRAIN_WINDOW_WIDTH = 551
 TRAIN_WINDOW_HEIGHT = 389
-TIMER_INTERVAL = 50
+TIMER_INTERVAL = 100
 TIMER_INTERVAL_DETECT = 1500
+KEYWORD_MODEL_FOLDER = 'keyword_spot'
+KEYWORD_FILE = 'keywords.txt'
+KEYWORD_MODEL = 'frozen_graph.pb'

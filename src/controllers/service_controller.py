@@ -1,7 +1,8 @@
-from detectors import detector
+from src.detectors import detector
 from src.builders import detector_builder
 from src.builders import feature_extractor_builder
 from src.builders import classifier_builder
+from src.builders import keyword_classifier_builder
 from src.utils.global_variables import *
 import cv2
 import os
@@ -11,20 +12,28 @@ class ServiceControllder():
     __detector = None
     __feature_extractor = None
     __classifier = None
+    __keyword_classifier = None
     __emb_array = []
     __class_names = []
     __labels = []
+
 
     def __init__(self):
         #self.__detector = detector_builder.build('faster_rcnn_inception_resnet_v2_atrous_lowproposals_oid')
         self.__detector = detector_builder.build("ssd_mobilenet_v2_coco")
         self.__feature_extractor = feature_extractor_builder.build('resnet_v2_101')
         self.__classifier = classifier_builder.build('SVM')
+        # self.__keyword_classifier = keyword_classifier_builder.build()
+
 
     def _load_pretrained_embeddings(self):
         file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), FROZEN_EMBEDDING_FILE_NAME)
         with open(file_path, 'rb') as infile:
             (self.__emb_array, self.__class_names, self.__labels) = pickle.load(infile)
+
+
+    def read_word(self, voice_string):
+        return self.__keyword_classifier.read_word(voice_string)
 
 
     def detect(self, image):
@@ -60,6 +69,7 @@ class ServiceControllder():
             pickle.dump((self.__emb_array, self.__labels, self.__class_names), outfile)
         print('Training completes!')
 
+
     def train_classifier_from_scratch(self):
         file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), FROZEN_EMBEDDING_FILE_NAME)
         nr_of_images, image_paths, labels, class_names = self._load_dataset()
@@ -69,8 +79,9 @@ class ServiceControllder():
             pickle.dump((nr_of_images, image_paths, labels, class_names), outfile)
         print('Training completes!')
 
+
     def _load_dataset(self):
-        dataset_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), DATASET_FOLDER)
+        dataset_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), DATASET_FOLDER, 'train')
         sub_folder_array = [sub_folder for sub_folder in os.listdir(dataset_dir)]
         image_paths = []
         labels = []
